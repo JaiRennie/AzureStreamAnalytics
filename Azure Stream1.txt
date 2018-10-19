@@ -1,0 +1,32 @@
+WITH machinlearning AS (
+	SELECT
+		EventEnqueuedUtcTime,
+		temperature,
+		humidity,
+		WeatherPredictionML(temperature, humidity) AS result
+	FROM IoTSudentHub
+)
+
+SELECT
+	System.Timestamp time,
+	CAST(result.[temperature] AS FLOAT) AS temperature,
+	CAST(result.[humidity] AS FLOAT) AS humidity,
+	CAST(result.[Scored Probabilites] AS FLOAT) AS rainprobability,
+	CAST(result.[Scored Label] AS nvarchar(max)) AS rain
+INTO
+	cosmosdboutput
+FROM machinelearning
+	
+SELECT
+	System.Timestamp time,
+	CAST(result.[temperature] AS FLOAT) AS temperature,
+	CAST(result.[humidity] AS FLOAT) AS humidity,
+	CAST(result.[Scored Probabilites] AS FLOAT) AS rainprobability,
+	CAST(result.[Scored Label] AS nvarchar(max)) AS rain,
+	machinelearning.EventEnqueuedUtcTime AS partkey,
+	machinelearning.temperature as rowkey
+INTO
+	tablestorage
+FROM machinelearning
+
+
